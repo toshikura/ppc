@@ -1,0 +1,153 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { PROJECT_ITEMS } from '../../data/project-items';
+
+export function getStaticPaths() {
+  return PROJECT_ITEMS.map((item, index) => ({
+    params: { slug: item.id },
+    props: {
+      item,
+      previousItem: PROJECT_ITEMS[(index - 1 + PROJECT_ITEMS.length) % PROJECT_ITEMS.length],
+      nextItem: PROJECT_ITEMS[(index + 1) % PROJECT_ITEMS.length],
+    },
+  }));
+}
+
+const { item, previousItem, nextItem } = Astro.props;
+const image = item.sources[item.sources.length - 1];
+
+const contentImages = [
+  { src: '/assets/dev/project-1.jpg', width: 1378, height: 1840 },
+  { src: '/assets/dev/project-2.jpg', width: 1020, height: 1362 },
+  { src: '/assets/dev/project-3.jpg', width: 844, height: 1130 },
+  { src: '/assets/dev/project-4.jpg', width: 926, height: 1238 },
+  { src: '/assets/dev/project-5.jpg', width: 1736, height: 1130 },
+  { src: '/assets/dev/project-6.jpg', width: 1016, height: 1016 },
+  { src: '/assets/dev/project-7.jpg', width: 844, height: 1130 },
+  { src: '/assets/dev/project-8.jpg', width: 926, height: 1238 },
+  { src: '/assets/dev/project-9.jpg', width: 1378, height: 1840 },
+  { src: '/assets/dev/project-10.jpg', width: 1382, height: 900 },
+  { src: '/assets/dev/project-11.jpg', width: 844, height: 1130 },
+  { src: '/assets/dev/project-12.jpg', width: 926, height: 1238 },
+  { src: '/assets/dev/project-13.jpg', width: 1378, height: 1840 },
+  { src: '/assets/dev/project-14.jpg', width: 1020, height: 1362 },
+  { src: '/assets/dev/project-15.jpg', width: 844, height: 1130 },
+  { src: '/assets/dev/project-16.jpg', width: 926, height: 1238 },
+  { src: '/assets/dev/project-17.jpg', width: 1020, height: 1362 },
+];
+
+const contentLayouts = [
+  {
+    mobile: { cols: 12, span: 8, start: 1, mt: 50 },
+    desktop: { cols: 12, span: 5, start: 1, mt: 100 },
+  },
+  {
+    mobile: { cols: 12, span: 6, start: 7, mt: 100 },
+    desktop: { cols: 10, span: 3, start: 8, mt: -100 },
+  },
+  {
+    mobile: { cols: 10, span: 4, start: 2, mt: 74 },
+    desktop: { cols: 12, span: 3, start: 4, mt: -150 },
+  },
+  {
+    mobile: { cols: 12, span: 5, start: 8, mt: 60 },
+    desktop: { cols: 11, span: 3, start: 8, mt: 150 },
+  },
+  {
+    mobile: { cols: 12, span: 9, start: 1, mt: 100 },
+    desktop: { cols: 12, span: 6, start: 1, mt: 150 },
+  },
+  {
+    mobile: { cols: 12, span: 5, start: 8, mt: 100 },
+    desktop: { cols: 10, span: 3, start: 8, mt: -50 },
+  },
+  {
+    mobile: { cols: 10, span: 4, start: 2, mt: 50 },
+    desktop: { cols: 12, span: 3, start: 4, mt: 0 },
+  },
+  {
+    mobile: { cols: 12, span: 5, start: 8, mt: 60 },
+    desktop: { cols: 11, span: 3, start: 8, mt: 150 },
+  },
+  {
+    mobile: { cols: 12, span: 6, start: 1, mt: 50 },
+    desktop: { cols: 10, span: 4, start: 1, mt: -100 },
+  },
+  {
+    mobile: { cols: 12, span: 9, start: 4, mt: 100 },
+    desktop: { cols: 10, span: 4, start: 7, mt: -100 },
+  },
+];
+
+const mediaItems = contentImages.map((contentImage, index) => ({
+  ...contentImage,
+  ...contentLayouts[index % contentLayouts.length],
+}));
+---
+
+<Layout title={`${item.title} — Transition test 01`}>
+  <main class="single">
+    <header class="single__header">
+      <h1>( {item.title} ) Placeholder project page</h1>
+    </header>
+
+    <section class="single__featured">
+      <figure
+        class="single__thumbnail"
+        data-transition-target
+        data-project-id={item.id}
+      >
+        <img
+          src={image.url}
+          alt={item.title}
+          width={item.width}
+          height={item.height}
+        />
+      </figure>
+    </section>
+
+    <section class="single__project">
+      <div class="single__output">
+        <p>
+          Art direction<br />
+          Identity<br />
+          Editorial design<br />
+          Digital experience
+        </p>
+      </div>
+
+      <div class="single__media">
+        {
+          mediaItems.map(({ src, width, height, mobile, desktop }, index) => (
+            <figure
+              class="single__media-item"
+              id={`media-${index + 1}`}
+              style={`--cols:${mobile.cols};--span:${mobile.span};--start:${mobile.start};--mt:${mobile.mt};--lg-cols:${desktop.cols};--lg-span:${desktop.span};--lg-start:${desktop.start};--lg-mt:${desktop.mt};`}
+            >
+              <img
+                src={src}
+                alt={`${item.title} project image ${index + 1}`}
+                width={width}
+                height={height}
+                loading="lazy"
+              />
+            </figure>
+          ))
+        }
+      </div>
+    </section>
+
+    <article class="single__body">
+      <h2>{item.title}</h2>
+      <p>
+        This is a temporary project page for testing the Home WebGL plane and
+        Single page transition.
+      </p>
+    </article>
+
+    <nav class="single__pagination" aria-label="Project navigation">
+      <a href={previousItem.href}>← {previousItem.title}</a>
+      <a href={nextItem.href}>{nextItem.title} →</a>
+    </nav>
+  </main>
+</Layout>

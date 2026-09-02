@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { PROJECT_ITEMS } from '../data/project-items';
+---
+
+<Layout title="Home — Transition test 01">
+  <main class="home" data-page="home">
+    <h1 class="sr-only">Home</h1>
+    <nav class="usg-grid" aria-label="Projects">
+      <div class="usg-grid-body">
+        {
+          PROJECT_ITEMS.map((item, index) => (
+            <div class="usg-grid-block">
+              <div class="usg-grid-block-inner">
+                <a
+                  class="home__project-link"
+                  href={item.href}
+                  aria-label={item.title}
+                  data-ppc-home-link
+                  data-index={index}
+                  draggable="false"
+                />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </nav>
+  </main>
+</Layout>

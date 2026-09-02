@@ -1,0 +1,48 @@
+---
+const links = [
+	{ label: 'Home', href: '/' },
+	{ label: 'About', href: '/about/' },
+	{ label: 'Partner', href: '/partner/' },
+];
+
+const normalizePath = (path: string) =>
+	path === '/' ? path : `${path.replace(/\/$/, '')}/`;
+---
+
+<div class="site-navigation">
+	<div class="site-navigation__controls">
+		<a class="site-navigation__home" href="/">Home</a>
+		<button
+			class="site-navigation__toggle"
+			type="button"
+			aria-controls="site-menu"
+			aria-expanded="false"
+		>
+			<span class="site-navigation__toggle-label">
+				<span class="site-navigation__toggle-index">Index</span>
+				<span class="site-navigation__toggle-close">Close</span>
+			</span>
+		</button>
+	</div>
+</div>
+
+<nav id="site-menu" class="site-menu" aria-label="Primary" aria-hidden="true">
+	<ul class="site-menu__list">
+		{
+			links.map(({ label, href }) => (
+				<li>
+					<a
+						class="site-menu__link"
+						href={href}
+						data-path={href}
+						aria-current={
+							normalizePath(Astro.url.pathname) === href ? 'page' : undefined
+						}
+					>
+						{label}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</nav>

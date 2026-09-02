@@ -1,0 +1,45 @@
+---
+import '../styles/global.scss';
+import SiteNavigation from '../components/SiteNavigation.astro';
+import { PROJECT_ITEMS } from '../data/project-items';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const firstData = {
+  top: {
+    items: PROJECT_ITEMS,
+  },
+};
+---
+
+<!doctype html>
+<html lang="ja" class:list={{ 'is-home': Astro.url.pathname === '/' }}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="AstroとSwupによるクリック遷移デモ" />
+    <title>{title}</title>
+    <script define:vars={{ firstData }}>
+      window.firstData = firstData;
+    </script>
+    <script>
+      import '../scripts/site';
+    </script>
+  </head>
+  <body>
+    <SiteNavigation />
+
+    <div
+      class="ppc-home-canvas"
+      data-ppc-home-canvas
+      data-active={Astro.url.pathname === '/' ? 'true' : 'false'}
+    ></div>
+
+    <div id="swup" class="swup-fade">
+      <slot />
+    </div>
+  </body>
+</html>
