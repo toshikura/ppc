@@ -1,7 +1,8 @@
 import { gsap } from 'gsap';
+import { resolveGsapEase } from './ease';
 import { PPC_HOME_CANVAS_PARAMS } from './params';
 
-export function getTransitionAlign(webgl) {
+function getTransitionTargetImage(webgl) {
 	const target = document.querySelector(
 		`[data-transition-target][data-project-id="${webgl.transitionEntry.item.id}"]`,
 	);
@@ -20,6 +21,10 @@ export function getTransitionAlign(webgl) {
 		);
 	}
 
+	return targetImage;
+}
+
+export function getTransitionAlign(webgl, targetImage) {
 	const rect = targetImage.getBoundingClientRect();
 
 	if (rect.width === 0 || rect.height === 0) {
@@ -37,22 +42,56 @@ export function getTransitionAlign(webgl) {
 }
 
 export function animateToTransitionTarget(webgl) {
-	const { x, y, width, height } = getTransitionAlign(webgl);
-	const zoom = PPC_HOME_CANVAS_PARAMS.animation.transition.zoom;
+	const targetImage = getTransitionTargetImage(webgl);
+	const startAlign = getTransitionAlign(webgl, targetImage);
+	const zoom = PPC_HOME_CANVAS_PARAMS.animation.transition.leave.zoom;
 	const duration = webgl.getTransitionDuration(zoom.duration);
+	const mesh = webgl.transitionEntry.mesh;
 
 	webgl.transitionTimeline = gsap.timeline({
-		onUpdate: webgl.render,
+		onUpdate: () => {
+			const currentAlign = getTransitionAlign(webgl, targetImage);
+			mesh.position.x += currentAlign.x - startAlign.x;
+			mesh.position.y += currentAlign.y - startAlign.y;
+			mesh.scale.x += currentAlign.width - startAlign.width;
+			mesh.scale.y += currentAlign.height - startAlign.height;
+			webgl.render();
+		},
 		onComplete: () => webgl.completeTransition(),
 	});
 	webgl.transitionTimeline.to(
-		webgl.transitionEntry.mesh.position,
-		{ x, y, duration, ease: zoom.ease },
+		mesh.position,
+		{
+			x: startAlign.x,
+			y: startAlign.y,
+			duration,
+			ease: resolveGsapEase(zoom.ease),
+		},
 		0,
 	);
 	webgl.transitionTimeline.to(
-		webgl.transitionEntry.mesh.scale,
-		{ x: width, y: height, duration, ease: zoom.ease },
+		mesh.scale,
+		{
+			x: startAlign.width,
+			y: startAlign.height,
+			duration,
+			ease: resolveGsapEase(zoom.ease),
+		},
 		0,
 	);
+}
+
+export function animateEnterFadein(webgl) {
+	const fadein = PPC_HOME_CANVAS_PARAMS.animation.transition.enter.fadein;
+	const materials = webgl.entries.map(({ mesh }) => mesh.material);
+
+	materials.forEach((material) => {
+		material.opacity = 0;
+	});
+
+	gsap.to(materials, {
+		opacity: 1,
+		duration: webgl.getTransitionDuration(fadein.duration),
+		ease: resolveGsapEase(fadein.ease),
+	});
 }

@@ -1,9 +1,20 @@
 @import './ppc_home_canvas/lib/usagi-grid-scroll.css';
 
+:root {
+	--ppc-home-gap: 3.5em;
+}
+
+html,
+html body {
+	transition: background-color 0.7s var(--ease-power2-in);
+}
+
 html.is-home,
 html.is-home body {
 	overflow: hidden;
 	overscroll-behavior: none;
+	background: #fff;
+	transition-timing-function: var(--ease-power2-out);
 }
 
 .ppc-home-canvas {
@@ -33,8 +44,12 @@ html.is-home body {
 	height: 100%;
 }
 
+html.is-ppc-home-splash .home .usg-grid {
+	pointer-events: none;
+}
+
 .usg-grid-block {
-	padding: var(--spacing-gap);
+	padding: var(--ppc-home-gap);
 }
 
 .usg-grid-block-inner {
@@ -71,7 +86,17 @@ html.is-ppc-home-transition [data-transition-target] img {
 	z-index: 2;
 }
 
+.tp-dfwv {
+	z-index: 20;
+}
+
+html:not(.is-home) .tp-dfwv {
+	display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+	html,
+	html body,
 	.ppc-home-canvas {
 		transition-duration: 1ms;
 	}

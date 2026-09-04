@@ -5,5 +5,10 @@ import SwupHeadPlugin from '@swup/head-plugin';
 export const swup = new Swup({
 	containers: ['#swup'],
 	animationSelector: '[class*="swup-"]',
-	plugins: [new SwupHeadPlugin(), new SwupA11yPlugin()],
+	plugins: [
+		new SwupHeadPlugin({
+			persistTags: '[data-tp-style]',
+		}),
+		new SwupA11yPlugin(),
+	],
 });

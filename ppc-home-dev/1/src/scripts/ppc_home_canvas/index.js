@@ -1,4 +1,5 @@
 import { swup } from '../swup';
+import { createHomeCanvasGui } from './gui';
 import PpcHomeCanvas from './webgl';
 
 const container = document.querySelector('[data-ppc-home-canvas]');
@@ -8,6 +9,7 @@ if (!container) {
 }
 
 const ppcHomeCanvas = new PpcHomeCanvas(container);
+createHomeCanvasGui(ppcHomeCanvas);
 
 function syncPpcHomeCanvasToPage() {
 	ppcHomeCanvas.setActive(

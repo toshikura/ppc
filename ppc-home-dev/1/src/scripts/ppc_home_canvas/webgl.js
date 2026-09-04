@@ -1,22 +1,35 @@
 import * as THREE from 'three';
 import { gsap } from 'gsap';
+import { resolveGsapEase } from './ease';
 import { PPC_HOME_CANVAS_PARAMS } from './params';
 import {
 	createHomeGrid,
 	destroyHomeGrid,
-	getPlaneSize,
 	positionEntries,
+	syncGridPadding,
 } from './grid';
-import { animateToTransitionTarget } from './transition';
+import { loadPlaneTextures } from './loader';
+import {
+	animateHomeSplash,
+	getHomeSplashName,
+	getHomeSplashPlaneName,
+	stopHomeSplash,
+} from './splash';
+import { animateEnterFadein, animateToTransitionTarget } from './transition';
 
 export default class PpcHomeCanvas {
 	constructor(container) {
 		this.container = container;
 		this.items = window.firstData.top.items;
 		this.scene = new THREE.Scene();
-		this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+		this.camera = new THREE.PerspectiveCamera(
+			PPC_HOME_CANVAS_PARAMS.fov,
+			1,
+			0.1,
+			10000,
+		);
 		this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-		this.geometry = new THREE.PlaneGeometry(1, 1, 32, 20);
+		this.geometry = new THREE.PlaneGeometry(1, 1);
 		this.textures = [];
 		this.entries = [];
 		this.links = [];
@@ -26,9 +39,12 @@ export default class PpcHomeCanvas {
 		this.transitionEntry = null;
 		this.transitionTimeline = null;
 		this.transitioning = false;
+		this.splashTimeline = null;
+		this.splashTargets = null;
+		this.splashing = false;
+		this.hasPlayedSplash = false;
 		this.active = container.dataset.active === 'true';
 
-		this.camera.position.z = 10;
 		this.renderer.setPixelRatio(
 			Math.min(window.devicePixelRatio, 2) * PPC_HOME_CANVAS_PARAMS.res,
 		);
@@ -47,57 +63,34 @@ export default class PpcHomeCanvas {
 
 	activateHome() {
 		createHomeGrid(this);
-		this.loadPlanes().then(() => {
+		loadPlaneTextures(this).then(() => {
 			if (!this.active || !this.grid) return;
 			this.syncMeshesToGrid();
 			this.syncLinks();
-			this.startLoop();
+
+			if (!this.hasPlayedSplash) {
+				this.grid.autoscrollProgress = 0;
+			} else {
+				animateEnterFadein(this);
+			}
+
+			this.grid.raf();
 			this.resize();
-		});
-	}
 
-	loadPlanes() {
-		if (this.loadPromise) return this.loadPromise;
-
-		const textureLoader = new THREE.TextureLoader();
-		this.loadPromise = Promise.all(
-			this.items.map((item, index) => {
-				if (item.media !== 'image') {
-					throw new Error(`Unsupported media type: ${item.media}`);
-				}
-
-				const { width } = getPlaneSize(this, item);
-				const source = this.selectSource(
-					item.sources,
-					width * this.renderer.getPixelRatio(),
+			if (!this.hasPlayedSplash) {
+				this.hasPlayedSplash = true;
+				animateHomeSplash(
+					this,
+					getHomeSplashName(),
+					getHomeSplashPlaneName(),
 				);
-
-				return textureLoader.loadAsync(source.url).then((texture) => ({
-					item,
-					index,
-					texture,
-				}));
-			}),
-		).then((loadedItems) => {
-			loadedItems.forEach(({ index, texture }) => {
-				texture.colorSpace = THREE.SRGBColorSpace;
-				texture.generateMipmaps = false;
-				texture.minFilter = THREE.LinearFilter;
-				this.textures[index] = texture;
-			});
+			} else {
+				this.startLoop();
+			}
 		});
-
-		return this.loadPromise;
 	}
 
-	selectSource(sources, requiredWidth) {
-		return (
-			sources.find(({ width }) => width >= requiredWidth) ??
-			sources[sources.length - 1]
-		);
-	}
-
-	createPlane(item, index, texture, el, link) {
+	createPlane(item, index, texture, cell, link) {
 		const material = new THREE.MeshBasicMaterial({
 			map: texture,
 			transparent: true,
@@ -105,7 +98,7 @@ export default class PpcHomeCanvas {
 		const mesh = new THREE.Mesh(this.geometry, material);
 		this.scene.add(mesh);
 
-		this.entries.push({ item, index, mesh, el, link });
+		this.entries.push({ item, index, mesh, el: cell.el, link, cell });
 	}
 
 	syncMeshesToGrid() {
@@ -122,7 +115,7 @@ export default class PpcHomeCanvas {
 				this.items[index],
 				index,
 				this.textures[index],
-				cell.el,
+				cell,
 				link,
 			);
 		});
@@ -139,6 +132,11 @@ export default class PpcHomeCanvas {
 	}
 
 	onLinkClick(event) {
+		if (this.splashing) {
+			event.preventDefault();
+			return;
+		}
+
 		if (this.gridPointer.moved) {
 			event.preventDefault();
 			event.stopPropagation();
@@ -179,12 +177,12 @@ export default class PpcHomeCanvas {
 		const otherMaterials = this.entries
 			.filter((item) => item !== entry)
 			.map(({ mesh }) => mesh.material);
-		const fadeout = PPC_HOME_CANVAS_PARAMS.animation.transition.fadeout;
+		const fadeout = PPC_HOME_CANVAS_PARAMS.animation.transition.leave.fadeout;
 
 		gsap.to(otherMaterials, {
 			opacity: 0,
 			duration: this.getTransitionDuration(fadeout.duration),
-			ease: fadeout.ease,
+			ease: resolveGsapEase(fadeout.ease),
 			onUpdate: this.render,
 		});
 	}
@@ -207,6 +205,7 @@ export default class PpcHomeCanvas {
 	}
 
 	resetPlanes() {
+		stopHomeSplash(this);
 		gsap.killTweensOf(this.entries.map(({ mesh }) => mesh.material));
 		if (this.transitionTimeline) this.transitionTimeline.kill();
 		this.transitionTimeline = null;
@@ -217,7 +216,7 @@ export default class PpcHomeCanvas {
 		this.entries.forEach(({ mesh }) => {
 			mesh.visible = true;
 			mesh.position.z = 0;
-			mesh.material.opacity = 1;
+			mesh.material.opacity = 0;
 		});
 	}
 
@@ -234,7 +233,7 @@ export default class PpcHomeCanvas {
 	tick() {
 		this.rafId = requestAnimationFrame(this.tick);
 
-		if (this.grid && !this.transitioning) {
+		if (this.grid && !this.transitioning && !this.splashing) {
 			this.grid.raf();
 			positionEntries(this);
 		}
@@ -246,16 +245,19 @@ export default class PpcHomeCanvas {
 		const width = this.container.clientWidth;
 		const height = this.container.clientHeight;
 
-		this.camera.left = width / -2;
-		this.camera.right = width / 2;
-		this.camera.top = height / 2;
-		this.camera.bottom = height / -2;
+		this.camera.aspect = width / height;
+		this.camera.position.z =
+			height /
+			(2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)));
+		this.camera.far = this.camera.position.z * 10;
 		this.camera.updateProjectionMatrix();
 
 		this.renderer.setSize(width, height, false);
 
-		if (this.grid && !this.transitioning) {
+		if (this.grid && !this.transitioning && !this.splashing) {
 			this.grid.resize();
+			syncGridPadding(this);
+			this.grid.onUpdate();
 			positionEntries(this);
 		}
 
@@ -275,11 +277,13 @@ export default class PpcHomeCanvas {
 			this.container.dataset.active = 'true';
 			this.resize();
 		} else if (this.transitioning) {
+			stopHomeSplash(this);
 			this.stopLoop();
 			this.links = [];
 			destroyHomeGrid(this);
 			animateToTransitionTarget(this);
 		} else {
+			stopHomeSplash(this);
 			this.stopLoop();
 			this.links = [];
 			destroyHomeGrid(this);

@@ -1,7 +1,7 @@
 ﻿/*!
- * Usagi Grid Scroll 1.0.4
+ * Usagi Grid Scroll 1.0.5
  * Author: Kenta Toshikura
- * Last update: 2026/9/2
+ * Last update: 2026/9/4
  * Require: gsap
 */
 
@@ -64,6 +64,18 @@ export default class UsagiGridScroll {
 			top      : 0,
 			left     : 0
 		}
+		this.autoscroll = {
+			x : 0,
+			y : 0
+		};
+		if (props.autoscroll) {
+			this.autoscroll = props.autoscroll;
+		}
+		this.autoscrollOffset = {
+			x : 0,
+			y : 0
+		};
+		this.autoscrollProgress = 1;
 
 		//
 		this.events = {};
@@ -288,6 +300,9 @@ export default class UsagiGridScroll {
 				el : v,
 				x : 0,
 				y : 0,
+				left : 0,
+				top : 0,
+				inview : false,
 				min : {
 					x : 0,
 					y : 0,
@@ -466,22 +481,16 @@ export default class UsagiGridScroll {
 
 	calcGrid() {
 
-		//
 		this.aspectRatio = this.aspect.y / this.aspect.x;
 
-		// childWidth と childHeight を計算
 		this.childWidth  = window.innerWidth / (this.grid - 1) * this.scale * this.autoScale;
 		this.childHeight = window.innerWidth / (this.grid - 1) * this.aspectRatio * this.scale * this.autoScale;
-
-		// 総サイズを計算
 		this.totalWidth  = this.childWidth * this.grid;
 		this.totalHeight = this.childHeight * this.grid;
 
-		// 中央寄せ
 		this.translate.x = -this.totalWidth / 2 + window.innerWidth / 2;
 		this.translate.y = -this.totalHeight / 2 + window.innerHeight / 2;
 
-		//
 		for (let i = 0; i < this.array.length; i++) {
 			const v = this.array[i];
 			const w = parseInt( v.el.style.width );
@@ -500,16 +509,20 @@ export default class UsagiGridScroll {
 	}
 
 	calcAutoScale(){
-		const minScaleX = window.innerWidth / (this.totalWidth - this.childWidth);
-		const minScaleY = window.innerHeight / (this.totalHeight - this.childHeight);
+		const childWidth = window.innerWidth / (this.grid - 1) * this.scale;
+		const childHeight = childWidth * (this.aspect.y / this.aspect.x);
+		const totalWidth = childWidth * this.grid;
+		const totalHeight = childHeight * this.grid;
+		const minScaleX = window.innerWidth / (totalWidth - childWidth);
+		const minScaleY = window.innerHeight / (totalHeight - childHeight);
 		this.autoScale  = Math.max( minScaleX, minScaleY, 1 );
 	}
 
 	resize(){
-		this.calcGrid();
 		if( this.autoScaleEnable ){
 			this.calcAutoScale();
 		}
+		this.calcGrid();
 	}
 
 	//
@@ -568,12 +581,16 @@ export default class UsagiGridScroll {
 		//
 		this.scroll.x += ( this.delta1.x - this.scroll.x ) * this.ease;
 		if ( 0.001 >= Math.abs(this.scroll.x) ) this.scroll.x = 0;
-		this.scroll.left = this.scroll.x % this.totalWidth;
 
 		//
 		this.scroll.y += ( this.delta1.y - this.scroll.y ) * this.ease;
 		if ( 0.001 >= Math.abs(this.scroll.y) ) this.scroll.y = 0;
-		this.scroll.top = this.scroll.y % this.totalHeight;
+
+		//
+		this.autoscrollOffset.x = ( this.autoscrollOffset.x + this.autoscroll.x * this.autoscrollProgress ) % this.totalWidth;
+		this.autoscrollOffset.y = ( this.autoscrollOffset.y + this.autoscroll.y * this.autoscrollProgress ) % this.totalHeight;
+		this.scroll.left = ( this.scroll.x + this.autoscrollOffset.x ) % this.totalWidth;
+		this.scroll.top = ( this.scroll.y + this.autoscrollOffset.y ) % this.totalHeight;
 
 		//
 		this.position.x = ( this.scroll.left % this.totalWidth / this.totalWidth );
@@ -622,7 +639,10 @@ export default class UsagiGridScroll {
 			//
 			const inview_x = (_x + this.childWidth) > 0 && _x < window.innerWidth;
 			const inview_y = (_y + this.childHeight) > 0 && _y < window.innerHeight;
-			if (inview_y && inview_x) {
+			v.left = _x;
+			v.top = _y;
+			v.inview = inview_x && inview_y;
+			if (v.inview) {
 				v.el.style.transform = "translate3d(" + _x + "px, " + _y + "px, 0)";
 				v.el.dataset.visible = 1;
 			} else {

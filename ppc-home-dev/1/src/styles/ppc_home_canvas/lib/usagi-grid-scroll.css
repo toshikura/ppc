@@ -17,7 +17,7 @@ html.is-usg-grid-scroll, .is-usg-grid-scroll body {
 	cursor: grabbing;
 }
 .usg-grid-block{
-	padding: 1em;
+	padding: 1.5em;
 }
 .usg-grid-block div{
 	display:flex;
