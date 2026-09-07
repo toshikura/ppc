@@ -1,79 +1,80 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { withBase } from '../../utils/paths';
 
 const mediaItems = [
   {
-    src: '/assets/thumbnails/test-02-portrait.png',
+    src: withBase('assets/thumbnails/test-02-portrait.png'),
     width: 1086,
     height: 1448,
     mobile: { cols: 12, span: 8, start: 1, mt: 50 },
     desktop: { cols: 12, span: 5, start: 1, mt: 100 },
   },
   {
-    src: '/assets/thumbnails/test-03-portrait.png',
+    src: withBase('assets/thumbnails/test-03-portrait.png'),
     width: 1086,
     height: 1448,
     mobile: { cols: 12, span: 6, start: 7, mt: 100 },
     desktop: { cols: 10, span: 3, start: 8, mt: -100 },
   },
   {
-    src: '/assets/thumbnails/test-04-portrait.png',
+    src: withBase('assets/thumbnails/test-04-portrait.png'),
     width: 1086,
     height: 1448,
     mobile: { cols: 10, span: 4, start: 2, mt: 74 },
     desktop: { cols: 12, span: 3, start: 4, mt: -150 },
   },
   {
-    src: '/assets/thumbnails/test-05-landscape.png',
+    src: withBase('assets/thumbnails/test-05-landscape.png'),
     width: 1086,
     height: 724,
     mobile: { cols: 12, span: 5, start: 8, mt: 60 },
     desktop: { cols: 11, span: 3, start: 8, mt: 150 },
   },
   {
-    src: '/assets/thumbnails/test-06-square.png',
+    src: withBase('assets/thumbnails/test-06-square.png'),
     width: 1086,
     height: 1086,
     mobile: { cols: 12, span: 9, start: 1, mt: 100 },
     desktop: { cols: 12, span: 6, start: 1, mt: 150 },
   },
   {
-    src: '/assets/thumbnails/test-07-square.png',
+    src: withBase('assets/thumbnails/test-07-square.png'),
     width: 1086,
     height: 1086,
     mobile: { cols: 12, span: 5, start: 8, mt: 100 },
     desktop: { cols: 10, span: 3, start: 8, mt: -50 },
   },
   {
-    src: '/assets/thumbnails/test-08-landscape.png',
+    src: withBase('assets/thumbnails/test-08-landscape.png'),
     width: 1086,
     height: 724,
     mobile: { cols: 10, span: 4, start: 2, mt: 50 },
     desktop: { cols: 12, span: 3, start: 4, mt: 0 },
   },
   {
-    src: '/assets/thumbnails/test-09-landscape.png',
+    src: withBase('assets/thumbnails/test-09-landscape.png'),
     width: 1672,
     height: 941,
     mobile: { cols: 12, span: 5, start: 8, mt: 60 },
     desktop: { cols: 11, span: 3, start: 8, mt: 150 },
   },
   {
-    src: '/assets/thumbnails/test-10-square.png',
+    src: withBase('assets/thumbnails/test-10-square.png'),
     width: 1254,
     height: 1254,
     mobile: { cols: 12, span: 6, start: 1, mt: 50 },
     desktop: { cols: 10, span: 4, start: 1, mt: -100 },
   },
   {
-    src: '/assets/thumbnails/test-11-landscape.png',
+    src: withBase('assets/thumbnails/test-11-landscape.png'),
     width: 1536,
     height: 1024,
     mobile: { cols: 12, span: 9, start: 4, mt: 100 },
     desktop: { cols: 10, span: 4, start: 7, mt: -100 },
   },
   {
-    src: '/assets/thumbnails/test-12-square.png',
+    src: withBase('assets/thumbnails/test-12-square.png'),
     width: 1254,
     height: 1254,
     mobile: { cols: 12, span: 7, start: 1, mt: 70 },
@@ -82,10 +83,10 @@ const mediaItems = [
 ];
 
 const scopeItems = [
-  { label: 'Brand Direction', src: '/assets/thumbnails/test-02-portrait.png', target: 1 },
-  { label: 'Editorial Design', src: '/assets/thumbnails/test-05-landscape.png', target: 4 },
-  { label: 'Digital Experience', src: '/assets/thumbnails/test-06-square.png', target: 5 },
-  { label: 'Photography', src: '/assets/thumbnails/test-10-square.png', target: 9 },
+  { label: 'Brand Direction', src: withBase('assets/thumbnails/test-02-portrait.png'), target: 1 },
+  { label: 'Editorial Design', src: withBase('assets/thumbnails/test-05-landscape.png'), target: 4 },
+  { label: 'Digital Experience', src: withBase('assets/thumbnails/test-06-square.png'), target: 5 },
+  { label: 'Photography', src: withBase('assets/thumbnails/test-10-square.png'), target: 9 },
 ];
 ---
 
@@ -98,7 +99,7 @@ const scopeItems = [
     <section class="single__featured">
       <figure class="single__thumbnail" data-transition-target>
         <img
-          src="/assets/thumbnails/test-01-portrait.png"
+          src={withBase('assets/thumbnails/test-01-portrait.png')}
           alt="Studies in Form and Light"
           width="1086"
           height="1448"
@@ -167,8 +168,8 @@ const scopeItems = [
     </section>
 
     <nav class="single__pagination" aria-label="Project navigation">
-      <a href="/">← Episode</a>
-      <a href="/">Next&nbsp;&nbsp;/&nbsp;&nbsp;Another Study</a>
+      <a href={withBase('')}>← Episode</a>
+      <a href={withBase('')}>Next&nbsp;&nbsp;/&nbsp;&nbsp;Another Study</a>
     </nav>
   </main>
 </Layout>

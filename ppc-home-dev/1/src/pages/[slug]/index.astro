@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { PROJECT_ITEMS } from '../../data/project-items';
+import { withBase } from '../../utils/paths';
 
 export function getStaticPaths() {
   return PROJECT_ITEMS.map((item, index) => ({
@@ -17,23 +18,23 @@ const { item, previousItem, nextItem } = Astro.props;
 const image = item.sources[item.sources.length - 1];
 
 const contentImages = [
-  { src: '/assets/dev/project-1.jpg', width: 1378, height: 1840 },
-  { src: '/assets/dev/project-2.jpg', width: 1020, height: 1362 },
-  { src: '/assets/dev/project-3.jpg', width: 844, height: 1130 },
-  { src: '/assets/dev/project-4.jpg', width: 926, height: 1238 },
-  { src: '/assets/dev/project-5.jpg', width: 1736, height: 1130 },
-  { src: '/assets/dev/project-6.jpg', width: 1016, height: 1016 },
-  { src: '/assets/dev/project-7.jpg', width: 844, height: 1130 },
-  { src: '/assets/dev/project-8.jpg', width: 926, height: 1238 },
-  { src: '/assets/dev/project-9.jpg', width: 1378, height: 1840 },
-  { src: '/assets/dev/project-10.jpg', width: 1382, height: 900 },
-  { src: '/assets/dev/project-11.jpg', width: 844, height: 1130 },
-  { src: '/assets/dev/project-12.jpg', width: 926, height: 1238 },
-  { src: '/assets/dev/project-13.jpg', width: 1378, height: 1840 },
-  { src: '/assets/dev/project-14.jpg', width: 1020, height: 1362 },
-  { src: '/assets/dev/project-15.jpg', width: 844, height: 1130 },
-  { src: '/assets/dev/project-16.jpg', width: 926, height: 1238 },
-  { src: '/assets/dev/project-17.jpg', width: 1020, height: 1362 },
+  { src: withBase('assets/dev/project-1.jpg'), width: 1378, height: 1840 },
+  { src: withBase('assets/dev/project-2.jpg'), width: 1020, height: 1362 },
+  { src: withBase('assets/dev/project-3.jpg'), width: 844, height: 1130 },
+  { src: withBase('assets/dev/project-4.jpg'), width: 926, height: 1238 },
+  { src: withBase('assets/dev/project-5.jpg'), width: 1736, height: 1130 },
+  { src: withBase('assets/dev/project-6.jpg'), width: 1016, height: 1016 },
+  { src: withBase('assets/dev/project-7.jpg'), width: 844, height: 1130 },
+  { src: withBase('assets/dev/project-8.jpg'), width: 926, height: 1238 },
+  { src: withBase('assets/dev/project-9.jpg'), width: 1378, height: 1840 },
+  { src: withBase('assets/dev/project-10.jpg'), width: 1382, height: 900 },
+  { src: withBase('assets/dev/project-11.jpg'), width: 844, height: 1130 },
+  { src: withBase('assets/dev/project-12.jpg'), width: 926, height: 1238 },
+  { src: withBase('assets/dev/project-13.jpg'), width: 1378, height: 1840 },
+  { src: withBase('assets/dev/project-14.jpg'), width: 1020, height: 1362 },
+  { src: withBase('assets/dev/project-15.jpg'), width: 844, height: 1130 },
+  { src: withBase('assets/dev/project-16.jpg'), width: 926, height: 1238 },
+  { src: withBase('assets/dev/project-17.jpg'), width: 1020, height: 1362 },
 ];
 
 const contentLayouts = [

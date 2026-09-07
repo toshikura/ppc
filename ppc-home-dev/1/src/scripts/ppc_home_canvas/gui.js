@@ -160,7 +160,7 @@ export function createHomeCanvasGui(webgl) {
 	const search = new URLSearchParams(window.location.search);
 	const animation = PPC_HOME_CANVAS_PARAMS.animation;
 	const splash = animation.splash;
-	const pane = new Pane({ title: 'PPC Home' });
+	const pane = new Pane({ title: 'PPC Home', expanded: false });
 
 	const layoutName = search.get('splash');
 	const planeName = search.get('plane');

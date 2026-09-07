@@ -19,7 +19,7 @@ function setMenuOpen(isOpen: boolean) {
 }
 
 function normalizePath(path: string) {
-	return path === '/' ? path : `${path.replace(/\/$/, '')}/`;
+	return `${path.replace(/index\.html$/, '').replace(/\/$/, '')}/`;
 }
 
 function syncCurrentLink() {

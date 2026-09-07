@@ -1,17 +1,19 @@
 ---
+import { withBase } from '../utils/paths';
+
 const links = [
-	{ label: 'Home', href: '/' },
-	{ label: 'About', href: '/about/' },
-	{ label: 'Partner', href: '/partner/' },
+	{ label: 'Home', href: withBase('') },
+	{ label: 'About', href: withBase('about/') },
+	{ label: 'Partner', href: withBase('partner/') },
 ];
 
 const normalizePath = (path: string) =>
-	path === '/' ? path : `${path.replace(/\/$/, '')}/`;
+	`${path.replace(/index\.html$/, '').replace(/\/$/, '')}/`;
 ---
 
 <div class="site-navigation">
 	<div class="site-navigation__controls">
-		<a class="site-navigation__home" href="/">Home</a>
+		<a class="site-navigation__home" href={withBase('')}>Home</a>
 		<button
 			class="site-navigation__toggle"
 			type="button"
