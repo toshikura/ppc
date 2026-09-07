@@ -42,6 +42,10 @@ export function createHomeGrid(webgl) {
 		webgl.gridPointer.x = event.clientX;
 		webgl.gridPointer.y = event.clientY;
 		webgl.gridPointer.moved = false;
+		const block = event.target.closest('.usg-grid-block');
+		webgl.pendingLeaveEntry = block
+			? webgl.entries.find((item) => item.el === block)
+			: null;
 	};
 
 	webgl.onGridPointerMove = (event) => {
@@ -92,6 +96,21 @@ export function getPlaneSize(webgl, item) {
 	return {
 		width,
 		height: width / aspect,
+	};
+}
+
+export function getEntryAlign(webgl, entry) {
+	const width = webgl.container.clientWidth;
+	const height = webgl.container.clientHeight;
+	const cellWidth = webgl.grid.childWidth;
+	const cellHeight = webgl.grid.childHeight;
+	const planeSize = getPlaneSize(webgl, entry.item);
+
+	return {
+		x: entry.cell.left + cellWidth / 2 - width / 2,
+		y: height / 2 - entry.cell.top - cellHeight / 2,
+		width: planeSize.width,
+		height: planeSize.height,
 	};
 }
 

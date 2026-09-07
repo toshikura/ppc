@@ -29,6 +29,9 @@ export const PPC_HOME_CANVAS_PARAMS = {
 		x: 0, // autoscroll x : フレームごとの移動量
 		y: 0.2, // autoscroll y : フレームごとの移動量
 	},
+	animationScale : {
+		duration: 1, // duration : 全体の duration に掛ける
+	},
 	animation: {
 		splash: {
 			layoutName: 'static', // layout
@@ -188,7 +191,7 @@ export const PPC_HOME_CANVAS_PARAMS = {
 			},
 		},
 		transition: {
-			leave: {
+			homeToSingle: {
 				zoom: {
 					duration: 2, // duration
 					ease: EASES.t1, // ease
@@ -198,7 +201,19 @@ export const PPC_HOME_CANVAS_PARAMS = {
 					ease: EASES.t1, // ease
 				},
 			},
-			enter: {
+			singleToHome: {
+				fadein: {
+					duration: 2, // duration
+					ease: EASES.t1, // ease
+				},
+			},
+			homeToOther: {
+				fadeout: {
+					duration: 1, // duration
+					ease: EASES.t1, // ease
+				},
+			},
+			otherToHome: {
 				fadein: {
 					duration: 1, // duration
 					ease: EASES.t1, // ease
@@ -207,3 +222,7 @@ export const PPC_HOME_CANVAS_PARAMS = {
 		},
 	},
 };
+
+export function scaleDuration(duration) {
+	return duration * PPC_HOME_CANVAS_PARAMS.animationScale.duration;
+}

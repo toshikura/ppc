@@ -77,8 +77,21 @@ html.is-ppc-home-splash .home .usg-grid {
 	}
 }
 
-html.is-ppc-home-transition [data-transition-target] img {
+html.is-ppc-home-transition,
+html.is-ppc-home-transition body {
+	overflow: hidden;
+	overscroll-behavior: none;
+}
+
+html.is-ppc-home-transition [data-transition-target] img,
+html.is-ppc-home-held [data-transition-target] img {
 	visibility: hidden;
+}
+
+html.is-ppc-home-transition [data-ppc-home-canvas],
+html.is-ppc-home-held [data-ppc-home-canvas] {
+	opacity: 1;
+	transition-duration: 0s;
 }
 
 #swup {

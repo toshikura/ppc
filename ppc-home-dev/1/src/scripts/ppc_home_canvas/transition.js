@@ -2,6 +2,21 @@ import { gsap } from 'gsap';
 import { resolveGsapEase } from './ease';
 import { PPC_HOME_CANVAS_PARAMS } from './params';
 
+export function getImageAlign(webgl, targetImage, projectId) {
+	const rect = targetImage.getBoundingClientRect();
+
+	if (rect.width === 0 || rect.height === 0) {
+		throw new Error(`Transition target image for ${projectId} has zero size.`);
+	}
+
+	return {
+		x: rect.left + rect.width / 2 - webgl.container.clientWidth / 2,
+		y: webgl.container.clientHeight / 2 - rect.top - rect.height / 2,
+		width: rect.width,
+		height: rect.height,
+	};
+}
+
 function getTransitionTargetImage(webgl) {
 	const target = document.querySelector(
 		`[data-transition-target][data-project-id="${webgl.transitionEntry.item.id}"]`,
@@ -25,28 +40,19 @@ function getTransitionTargetImage(webgl) {
 }
 
 export function getTransitionAlign(webgl, targetImage) {
-	const rect = targetImage.getBoundingClientRect();
-
-	if (rect.width === 0 || rect.height === 0) {
-		throw new Error(
-			`Transition target image for ${webgl.transitionEntry.item.id} has zero size.`,
-		);
-	}
-
-	return {
-		x: rect.left + rect.width / 2 - webgl.container.clientWidth / 2,
-		y: webgl.container.clientHeight / 2 - rect.top - rect.height / 2,
-		width: rect.width,
-		height: rect.height,
-	};
+	return getImageAlign(webgl, targetImage, webgl.transitionEntry.item.id);
 }
 
 export function animateToTransitionTarget(webgl) {
 	const targetImage = getTransitionTargetImage(webgl);
 	const startAlign = getTransitionAlign(webgl, targetImage);
-	const zoom = PPC_HOME_CANVAS_PARAMS.animation.transition.leave.zoom;
+	const zoom = PPC_HOME_CANVAS_PARAMS.animation.transition.homeToSingle.zoom;
 	const duration = webgl.getTransitionDuration(zoom.duration);
 	const mesh = webgl.transitionEntry.mesh;
+
+	webgl.entries.forEach((item) => {
+		if (item !== webgl.transitionEntry) item.mesh.visible = false;
+	});
 
 	webgl.transitionTimeline = gsap.timeline({
 		onUpdate: () => {
@@ -81,8 +87,7 @@ export function animateToTransitionTarget(webgl) {
 	);
 }
 
-export function animateEnterFadein(webgl) {
-	const fadein = PPC_HOME_CANVAS_PARAMS.animation.transition.enter.fadein;
+export function animateEnterFadein(webgl, fadein) {
 	const materials = webgl.entries.map(({ mesh }) => mesh.material);
 
 	materials.forEach((material) => {

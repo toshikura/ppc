@@ -1,7 +1,7 @@
-﻿/*!
- * Usagi Grid Scroll 1.0.5
+/*!
+ * Usagi Grid Scroll 1.0.6
  * Author: Kenta Toshikura
- * Last update: 2026/9/4
+ * Last update: 2026/9/7
  * Require: gsap
 */
 
@@ -134,6 +134,8 @@ export default class UsagiGridScroll {
 
 		//
 		this.array = [];
+		this.map = {};
+		this.centerTween = null;
 		this.content = {
 			width  : 0,
 			height : 0
@@ -256,38 +258,38 @@ export default class UsagiGridScroll {
 	initElements(){
 
 		//
-		const g = this.grid * this.grid - (this.block.origin.length);
+		const origins = [...this.block.origin];
+		const sourceIndexes = origins.map((origin, index) => index);
+		const g = this.grid * this.grid - origins.length;
 
 		//
-		if( g != 0 ){
-			if( g > 0 ){
+		if( g > 0 ){
 
-				// 足りない場合は同じ要素が隣接しないように増やす
-				const origins = [...this.block.origin];
-				const sourceIndexes = origins.map((origin, index) => index);
-				for (var i = 0; i < g; i++) {
-					const source = this.getCloneSource(
-						origins,
-						sourceIndexes,
-						sourceIndexes.length
-					);
-					const clone = source.origin.cloneNode(true);
-					clone.classList.add('is-clone');
-					this.bodyElem.appendChild(clone);
-					sourceIndexes.push(source.index);
-				}
-				
-			} else {
-
-				// 多い場合はランダムに減らす
-				const removeCount = Math.abs(g);
-				const currentItems = [...this.bodyElem.querySelectorAll(this.blockClassName)];
-				const toRemove = this.getRandom(currentItems, removeCount);
-				toRemove.forEach((item) => {
-					this.bodyElem.removeChild(item);
-				});
-
+			// 足りない場合は同じ要素が隣接しないように増やす
+			for (var i = 0; i < g; i++) {
+				const source = this.getCloneSource(
+					origins,
+					sourceIndexes,
+					sourceIndexes.length
+				);
+				const clone = source.origin.cloneNode(true);
+				clone.classList.add('is-clone');
+				this.bodyElem.appendChild(clone);
+				sourceIndexes.push(source.index);
 			}
+
+		} else if( g < 0 ){
+
+			// 多い場合はランダムに減らす
+			const currentItems = [...this.bodyElem.querySelectorAll(this.blockClassName)];
+			const toRemove = this.getRandom(currentItems, Math.abs(g));
+			toRemove.forEach((item) => {
+				const i = currentItems.indexOf(item);
+				currentItems.splice(i, 1);
+				sourceIndexes.splice(i, 1);
+				this.bodyElem.removeChild(item);
+			});
+
 		}
 
 		//
@@ -295,9 +297,11 @@ export default class UsagiGridScroll {
 
 		//
 		this.array = [];
+		this.map = {};
 		this.block.clone.forEach( (v,i) =>{
-			this.array.push({
+			const cell = {
 				el : v,
+				index : sourceIndexes[i],
 				x : 0,
 				y : 0,
 				left : 0,
@@ -321,7 +325,10 @@ export default class UsagiGridScroll {
 					x : 0,
 					y : 0,
 				},
-			});
+			};
+			this.array.push(cell);
+			if( !this.map[cell.index] ) this.map[cell.index] = [];
+			this.map[cell.index].push(cell);
 		});
 
 		//
@@ -349,6 +356,87 @@ export default class UsagiGridScroll {
 			}
 		}
 
+	}
+
+	wrapDelta(current, target, size) {
+		return ((target - current) % size + size * 1.5) % size - size * 0.5;
+	}
+
+	getNearestCenter(index) {
+		const cells = this.map[index];
+		if (!cells || !cells.length) {
+			throw new Error(`UsagiGridScroll could not find index ${index}.`);
+		}
+
+		let nearest = cells[0];
+		let delta = { x: 0, y: 0 };
+		let best = Infinity;
+
+		for (let i = 0; i < cells.length; i++) {
+			const cell = cells[i];
+			const targetLeft = (cell.position.x + 0.5) * this.childWidth - this.totalWidth / 2;
+			const targetTop = (cell.position.y + 0.5) * this.childHeight - this.totalHeight / 2;
+			const x = this.wrapDelta(this.scroll.left, targetLeft, this.totalWidth);
+			const y = this.wrapDelta(this.scroll.top, targetTop, this.totalHeight);
+			const dist = x * x + y * y;
+			if (dist < best) {
+				best = dist;
+				nearest = cell;
+				delta = { x, y };
+			}
+		}
+
+		return { cell: nearest, delta };
+	}
+
+	applyCenterScroll() {
+		this.scroll.left = (this.scroll.x + this.autoscrollOffset.x) % this.totalWidth;
+		this.scroll.top = (this.scroll.y + this.autoscrollOffset.y) % this.totalHeight;
+		this.position.x = this.scroll.left % this.totalWidth / this.totalWidth;
+		this.position.y = this.scroll.top % this.totalHeight / this.totalHeight;
+		this.onUpdate();
+	}
+
+	setCenter(index) {
+		this.onResetCenterTween();
+		const { cell, delta } = this.getNearestCenter(index);
+		this.scroll.x += delta.x;
+		this.scroll.y += delta.y;
+		this.delta1.x = this.scroll.x;
+		this.delta1.y = this.scroll.y;
+		this.applyCenterScroll();
+		return cell;
+	}
+
+	toCenter({ index, ease, duration }) {
+		this.onResetCenterTween();
+		const { cell, delta } = this.getNearestCenter(index);
+		const target = {
+			x: this.scroll.x + delta.x,
+			y: this.scroll.y + delta.y,
+		};
+		this.centerTween = gsap.to(this.scroll, {
+			x: target.x,
+			y: target.y,
+			duration,
+			ease,
+			onUpdate: () => {
+				this.delta1.x = this.scroll.x;
+				this.delta1.y = this.scroll.y;
+				this.applyCenterScroll();
+			},
+			onComplete: () => {
+				this.centerTween = null;
+				this.delta1.x = this.scroll.x;
+				this.delta1.y = this.scroll.y;
+			}
+		});
+		return cell;
+	}
+
+	onResetCenterTween() {
+		if (this.centerTween) this.centerTween.kill();
+		this.centerTween = null;
 	}
 
 
@@ -391,6 +479,7 @@ export default class UsagiGridScroll {
 
 	onWheel( e ){
 		if( !this.ready || this.stopped ) return false;
+		this.onResetCenterTween();
 		const detail = this.getDetail(e);
 		if (e.deltaX !== 0) {
 			e.preventDefault();
@@ -421,6 +510,7 @@ export default class UsagiGridScroll {
 			x = e.touches[0].clientX;
 			y = e.touches[0].clientY;
 		}
+		this.onResetCenterTween();
 		this.touch.start.x = x;
 		this.touch.start.y = y;
 		this.touch.dist.x  = 0;
@@ -559,6 +649,7 @@ export default class UsagiGridScroll {
 
 	onResetTweens(){
 		if( this.acceleration.tween ) this.acceleration.tween.kill(); this.acceleration.tween = null;
+		this.onResetCenterTween();
 	}
 
 	onComplete(){
@@ -579,12 +670,14 @@ export default class UsagiGridScroll {
 		this.calcGrid();
 
 		//
-		this.scroll.x += ( this.delta1.x - this.scroll.x ) * this.ease;
-		if ( 0.001 >= Math.abs(this.scroll.x) ) this.scroll.x = 0;
+		if( !this.centerTween ){
+			this.scroll.x += ( this.delta1.x - this.scroll.x ) * this.ease;
+			if ( 0.001 >= Math.abs(this.scroll.x) ) this.scroll.x = 0;
 
-		//
-		this.scroll.y += ( this.delta1.y - this.scroll.y ) * this.ease;
-		if ( 0.001 >= Math.abs(this.scroll.y) ) this.scroll.y = 0;
+			//
+			this.scroll.y += ( this.delta1.y - this.scroll.y ) * this.ease;
+			if ( 0.001 >= Math.abs(this.scroll.y) ) this.scroll.y = 0;
+		}
 
 		//
 		this.autoscrollOffset.x = ( this.autoscrollOffset.x + this.autoscroll.x * this.autoscrollProgress ) % this.totalWidth;
@@ -699,6 +792,7 @@ export default class UsagiGridScroll {
 		this.$html.classList.remove('is-usg-grid-scroll');
 		clearTimeout( this.timers.complete.timer );
 		this.array = [];
+		this.map = {};
 		this.onResetTweens();
 		this.removeEvents();
 		this.events = {};

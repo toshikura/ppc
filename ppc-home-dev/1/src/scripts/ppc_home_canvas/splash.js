@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 import { gsap } from 'gsap';
 import { resolveGsapEase } from './ease';
 import { positionEntries } from './grid';
-import { PPC_HOME_CANVAS_PARAMS } from './params';
+import { PPC_HOME_CANVAS_PARAMS, scaleDuration } from './params';
 
 const ROTATION_PIVOT = new Vector3();
 
@@ -75,7 +75,7 @@ function addPlaneMotion(timeline, entry, target, plane, start, layout) {
 			{
 				x: target.scale.x * plane.scale.to,
 				y: target.scale.y * plane.scale.to,
-				duration: layout.duration,
+				duration: scaleDuration(layout.duration),
 				ease: resolveGsapEase(layout.ease),
 			},
 			start,
@@ -89,7 +89,7 @@ function addPlaneMotion(timeline, entry, target, plane, start, layout) {
 				x: plane.rotation.to.x * DEG_TO_RAD,
 				y: plane.rotation.to.y * DEG_TO_RAD,
 				z: plane.rotation.to.z * DEG_TO_RAD,
-				duration: layout.duration,
+				duration: scaleDuration(layout.duration),
 				ease: resolveGsapEase(layout.ease),
 			},
 			start,
@@ -101,7 +101,7 @@ function addPlaneMotion(timeline, entry, target, plane, start, layout) {
 			entry.mesh.material,
 			{
 				opacity: target.opacity * plane.opacity.to,
-				duration: layout.duration,
+				duration: scaleDuration(layout.duration),
 				ease: resolveGsapEase(layout.ease),
 			},
 			start,
@@ -460,7 +460,7 @@ function animateCardSplash(webgl, plane) {
 				x: target.position.x,
 				y: target.position.y,
 				z: 0,
-				duration: layout.duration,
+				duration: scaleDuration(layout.duration),
 				ease: resolveGsapEase(layout.ease),
 				onComplete: () => {
 					entry.mesh.renderOrder = 0;
@@ -535,7 +535,7 @@ function animateSlideSplash(webgl, plane) {
 			{
 				x: target.position.x,
 				y: target.position.y,
-				duration: layout.duration,
+				duration: scaleDuration(layout.duration),
 				ease: resolveGsapEase(layout.ease),
 				onComplete: () => {
 					entry.mesh.renderOrder = 0;
@@ -610,7 +610,7 @@ function animateTornadoSplash(webgl, plane) {
 			target,
 			{
 				tornado: 1,
-				duration,
+				duration: scaleDuration(duration),
 				ease: resolveGsapEase(layout.ease),
 				onUpdate: () => {
 					const point = getTornadoPoint(
@@ -633,7 +633,7 @@ function animateTornadoSplash(webgl, plane) {
 			target.unscrolled,
 			{
 				z: 0,
-				duration,
+				duration: scaleDuration(duration),
 				ease: resolveGsapEase(layout.ease),
 			},
 			start,
@@ -697,8 +697,7 @@ export function replayHomeSplash(
 }
 
 export function stopHomeSplash(webgl) {
-	stopSplashAutoscroll(webgl);
-	if (webgl.splashTimeline) webgl.splashTimeline.kill();
+	interruptHomeSplash(webgl);
 
 	if (webgl.splashTargets) {
 		webgl.splashTargets.forEach((target, entry) => {
@@ -706,8 +705,14 @@ export function stopHomeSplash(webgl) {
 		});
 	}
 
-	webgl.splashTimeline = null;
 	webgl.splashTargets = null;
+}
+
+export function interruptHomeSplash(webgl) {
+	stopSplashAutoscroll(webgl);
+	if (webgl.splashTimeline) webgl.splashTimeline.kill();
+
+	webgl.splashTimeline = null;
 	webgl.splashDragEnabled = false;
 	webgl.splashing = false;
 	document.documentElement.classList.remove('is-ppc-home-splash');

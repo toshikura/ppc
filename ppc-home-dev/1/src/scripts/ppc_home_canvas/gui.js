@@ -25,6 +25,9 @@ function numberBindingOptions(key, parentKey) {
 	if (key === 'ease') return { min: 0.01, max: 1 };
 	if (key === 'delay') return { min: 0, max: 3 };
 	if (key === 'dragStart') return { min: 0, max: 1, step: 0.05 };
+	if (parentKey === 'animationScale' && key === 'duration') {
+		return { min: 0, max: 3, step: 0.05 };
+	}
 	if (key === 'duration') return { min: 0, max: 5 };
 	if (key === 'stagger') return { min: 0, max: 0.5 };
 	if (key === 'depth') return { min: 0, max: 0.2 };
@@ -183,6 +186,13 @@ export function createHomeCanvasGui(webgl) {
 
 	const autoscrollFolder = pane.addFolder({ title: 'autoscroll' });
 	bindObject(autoscrollFolder, PPC_HOME_CANVAS_PARAMS.autoscroll, 'autoscroll');
+
+	const animationScaleFolder = pane.addFolder({ title: 'animationScale' });
+	bindObject(
+		animationScaleFolder,
+		PPC_HOME_CANVAS_PARAMS.animationScale,
+		'animationScale',
+	);
 
 	for (const name in animation) {
 		if (name === 'splash') {

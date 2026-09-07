@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { resolveGsapEase } from './ease';
-import { PPC_HOME_CANVAS_PARAMS } from './params';
+import { PPC_HOME_CANVAS_PARAMS, scaleDuration } from './params';
 import {
 	createHomeGrid,
 	destroyHomeGrid,
+	getEntryAlign,
 	positionEntries,
 	syncGridPadding,
 } from './grid';
@@ -13,6 +14,7 @@ import {
 	animateHomeSplash,
 	getHomeSplashName,
 	getHomeSplashPlaneName,
+	interruptHomeSplash,
 	stopHomeSplash,
 } from './splash';
 import { animateEnterFadein, animateToTransitionTarget } from './transition';
@@ -36,8 +38,13 @@ export default class PpcHomeCanvas {
 		this.grid = null;
 		this.loadPromise = null;
 		this.rafId = null;
+		this.homeSession = 0;
+		this.transitionKind = null;
 		this.transitionEntry = null;
+		this.pendingLeaveEntry = null;
+		this.enterFrom = null;
 		this.transitionTimeline = null;
+		this.leaveFadeTween = null;
 		this.transitioning = false;
 		this.splashTimeline = null;
 		this.splashTargets = null;
@@ -46,7 +53,7 @@ export default class PpcHomeCanvas {
 		this.active = container.dataset.active === 'true';
 
 		this.renderer.setPixelRatio(
-			Math.min(window.devicePixelRatio, 2) * PPC_HOME_CANVAS_PARAMS.res,
+			Math.max(1, Math.min(window.devicePixelRatio, 2) * PPC_HOME_CANVAS_PARAMS.res),
 		);
 		this.renderer.setClearColor(0x000000, 0);
 		this.renderer.domElement.setAttribute('aria-hidden', 'true');
@@ -62,16 +69,23 @@ export default class PpcHomeCanvas {
 	}
 
 	activateHome() {
+		const session = ++this.homeSession;
 		createHomeGrid(this);
 		loadPlaneTextures(this).then(() => {
-			if (!this.active || !this.grid) return;
+			if (session !== this.homeSession || !this.active || !this.grid) return;
 			this.syncMeshesToGrid();
 			this.syncLinks();
 
 			if (!this.hasPlayedSplash) {
 				this.grid.autoscrollProgress = 0;
 			} else {
-				animateEnterFadein(this);
+				const enter =
+					this.enterFrom === 'single'
+						? PPC_HOME_CANVAS_PARAMS.animation.transition.singleToHome
+							.fadein
+						: PPC_HOME_CANVAS_PARAMS.animation.transition.otherToHome
+							.fadein;
+				animateEnterFadein(this, enter);
 			}
 
 			this.grid.raf();
@@ -131,12 +145,62 @@ export default class PpcHomeCanvas {
 		});
 	}
 
-	onLinkClick(event) {
-		if (this.splashing) {
-			event.preventDefault();
-			return;
+	findItemIndexByUrl(url) {
+		const path =
+			new URL(url, window.location.origin).pathname.replace(/\/$/, '') || '/';
+
+		return this.items.findIndex((item) => {
+			const itemPath =
+				new URL(item.href, window.location.origin).pathname.replace(
+					/\/$/,
+					'',
+				) || '/';
+			return itemPath === path;
+		});
+	}
+
+	findEntryByIndex(index) {
+		const matches = this.entries.filter((entry) => entry.index === index);
+
+		if (!matches.length) {
+			throw new Error(`Home Plane ${index} was not found.`);
 		}
 
+		let nearest = matches[0];
+		let best = Infinity;
+
+		for (let i = 0; i < matches.length; i++) {
+			const entry = matches[i];
+			const dist =
+				entry.mesh.position.x * entry.mesh.position.x +
+				entry.mesh.position.y * entry.mesh.position.y;
+			if (dist < best) {
+				best = dist;
+				nearest = entry;
+			}
+		}
+
+		return nearest;
+	}
+
+	killTransitionTweens() {
+		if (this.leaveFadeTween) this.leaveFadeTween.kill();
+		this.leaveFadeTween = null;
+		if (this.transitionTimeline) this.transitionTimeline.kill();
+		this.transitionTimeline = null;
+		gsap.killTweensOf(this.entries.map(({ mesh }) => mesh.material));
+		gsap.killTweensOf(this.entries.map(({ mesh }) => mesh.position));
+		gsap.killTweensOf(this.entries.map(({ mesh }) => mesh.scale));
+	}
+
+	clearTransition() {
+		this.killTransitionTweens();
+		this.transitionKind = null;
+		this.transitionEntry = null;
+		this.transitioning = false;
+	}
+
+	onLinkClick(event) {
 		if (this.gridPointer.moved) {
 			event.preventDefault();
 			event.stopPropagation();
@@ -162,24 +226,110 @@ export default class PpcHomeCanvas {
 			);
 		}
 
-		this.startTransition(entry);
+		this.startLeaveToSingle(entry);
 	}
 
-	startTransition(entry) {
-		if (this.transitioning) return;
+	setPageType(type) {
+		if (type === 'home') return;
+		this.enterFrom = type;
+	}
 
+	prepareLeaveTransition(url) {
+		if (!this.grid || !this.entries.length) return;
+
+		const index = this.findItemIndexByUrl(url);
+
+		if (index === -1) {
+			this.startLeaveToOther();
+			return;
+		}
+
+		if (this.pendingLeaveEntry && this.pendingLeaveEntry.index === index) {
+			this.startLeaveToSingle(this.pendingLeaveEntry);
+			return;
+		}
+
+		if (
+			this.transitionKind === 'homeToSingle' &&
+			this.transitionEntry
+		) {
+			return;
+		}
+
+		this.startLeaveToSingle(this.findEntryByIndex(index));
+	}
+
+	snapFromSplash() {
+		this.entries.forEach(({ mesh }) => {
+			mesh.rotation.set(0, 0, 0);
+			mesh.renderOrder = 0;
+			mesh.material.depthWrite = true;
+		});
+		this.grid.onUpdate();
+		positionEntries(this);
+	}
+
+	startLeaveToOther() {
+		if (this.transitionKind === 'homeToOther') return;
+
+		const fromSplash = this.splashing;
+		interruptHomeSplash(this);
+		this.killTransitionTweens();
+
+		if (fromSplash) this.snapFromSplash();
+
+		this.enterFrom = 'other';
+		this.transitionKind = 'homeToOther';
+		this.transitioning = true;
+		this.transitionEntry = null;
+		document.documentElement.classList.add('is-ppc-home-transition');
+		this.grid.stop();
+
+		const fadeout = PPC_HOME_CANVAS_PARAMS.animation.transition.homeToOther.fadeout;
+		const materials = this.entries.map(({ mesh }) => mesh.material);
+
+		this.leaveFadeTween = gsap.to(materials, {
+			opacity: 0,
+			duration: this.getTransitionDuration(fadeout.duration),
+			ease: resolveGsapEase(fadeout.ease),
+			onUpdate: this.render,
+			onComplete: () => this.completeTransition(),
+		});
+	}
+
+	startLeaveToSingle(entry) {
+		if (this.transitionKind === 'homeToSingle' && this.transitionEntry === entry) {
+			return;
+		}
+
+		const fromSplash = this.splashing;
+		interruptHomeSplash(this);
+
+		this.killTransitionTweens();
+
+		if (fromSplash) this.snapFromSplash();
+
+		const align = getEntryAlign(this, entry);
+		entry.mesh.visible = true;
+		entry.mesh.material.opacity = 1;
+		entry.mesh.rotation.set(0, 0, 0);
+		entry.mesh.position.set(align.x, align.y, 1);
+		entry.mesh.scale.set(align.width, align.height, 1);
+
+		this.enterFrom = 'single';
+		this.transitionKind = 'homeToSingle';
 		this.transitioning = true;
 		this.transitionEntry = entry;
 		document.documentElement.classList.add('is-ppc-home-transition');
-		entry.mesh.position.z = 1;
 		this.grid.stop();
 
 		const otherMaterials = this.entries
 			.filter((item) => item !== entry)
 			.map(({ mesh }) => mesh.material);
-		const fadeout = PPC_HOME_CANVAS_PARAMS.animation.transition.leave.fadeout;
+		const fadeout =
+			PPC_HOME_CANVAS_PARAMS.animation.transition.homeToSingle.fadeout;
 
-		gsap.to(otherMaterials, {
+		this.leaveFadeTween = gsap.to(otherMaterials, {
 			opacity: 0,
 			duration: this.getTransitionDuration(fadeout.duration),
 			ease: resolveGsapEase(fadeout.ease),
@@ -188,27 +338,32 @@ export default class PpcHomeCanvas {
 	}
 
 	completeTransition() {
-		this.transitionEntry.mesh.visible = false;
-		this.transitionEntry.mesh.position.z = 0;
+		if (
+			this.transitionKind !== 'homeToSingle' &&
+			this.transitionKind !== 'homeToOther'
+		) {
+			return;
+		}
+		if (this.transitionEntry) {
+			this.transitionEntry.mesh.visible = false;
+			this.transitionEntry.mesh.position.z = 0;
+		}
 		this.container.dataset.active = 'false';
 		document.documentElement.classList.remove('is-ppc-home-transition');
-		this.transitionTimeline = null;
-		this.transitionEntry = null;
-		this.transitioning = false;
+		this.clearTransition();
 		this.render();
 	}
 
 	getTransitionDuration(duration) {
 		return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 			? 0
-			: duration;
+			: scaleDuration(duration);
 	}
 
 	resetPlanes() {
 		stopHomeSplash(this);
-		gsap.killTweensOf(this.entries.map(({ mesh }) => mesh.material));
-		if (this.transitionTimeline) this.transitionTimeline.kill();
-		this.transitionTimeline = null;
+		this.killTransitionTweens();
+		this.transitionKind = null;
 		this.transitionEntry = null;
 		this.transitioning = false;
 		document.documentElement.classList.remove('is-ppc-home-transition');
@@ -269,25 +424,34 @@ export default class PpcHomeCanvas {
 	}
 
 	setActive(active) {
-		this.active = active;
-
 		if (active) {
+			if (this.active && this.grid) return;
+			this.active = true;
 			this.resetPlanes();
 			this.activateHome();
 			this.container.dataset.active = 'true';
 			this.resize();
-		} else if (this.transitioning) {
-			stopHomeSplash(this);
-			this.stopLoop();
-			this.links = [];
-			destroyHomeGrid(this);
-			animateToTransitionTarget(this);
-		} else {
-			stopHomeSplash(this);
-			this.stopLoop();
-			this.links = [];
-			destroyHomeGrid(this);
-			this.container.dataset.active = 'false';
+			return;
 		}
+
+		this.active = false;
+		this.homeSession += 1;
+		interruptHomeSplash(this);
+		this.stopLoop();
+		this.links = [];
+		this.pendingLeaveEntry = null;
+		destroyHomeGrid(this);
+
+		if (this.transitionKind === 'homeToSingle' && this.transitionEntry) {
+			animateToTransitionTarget(this);
+			return;
+		}
+
+		if (this.transitionKind === 'homeToOther') return;
+
+		this.clearTransition();
+		this.container.dataset.active = 'false';
+		document.documentElement.classList.remove('is-ppc-home-transition');
+		this.render();
 	}
 }
