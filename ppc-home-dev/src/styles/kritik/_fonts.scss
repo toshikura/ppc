@@ -1,0 +1,10 @@
+@import url('https://use.typekit.net/jom8jsm.css');
+
+:root {
+	--font-sans: 'neue-haas-grotesk-display', sans-serif;
+}
+
+.font-sans {
+	font-family: var(--font-sans);
+	letter-spacing: 0.04em;
+}

@@ -1,0 +1,32 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { HOME_FEATURED_PROJECTS } from '../../../data/ppc_home/home-featured-projects';
+import { withBase } from '../../../utils/paths';
+
+const item = HOME_FEATURED_PROJECTS[0];
+const image = item.sources.large;
+---
+
+<Layout
+	title="( Atelier Nord ) Studies in Form and Light"
+	className="single"
+	breadcrumbItems={[
+		{ label: 'Collection', href: withBase('collection/') },
+		{ label: 'Atelier Nord', href: null },
+	]}
+	nextPage={{
+		title: HOME_FEATURED_PROJECTS[1].title,
+		href: HOME_FEATURED_PROJECTS[1].href,
+	}}
+>
+	<section class="single__featured">
+		<figure class="single__thumbnail" data-transition-target>
+			<img
+				src={image.url}
+				alt="Studies in Form and Light"
+				width={item.width}
+				height={item.height}
+			/>
+		</figure>
+	</section>
+</Layout>

@@ -1,0 +1,20 @@
+---
+interface Props {
+	primaryLabel?: string;
+	isPrimaryLabelHeading?: boolean;
+}
+
+const { primaryLabel, isPrimaryLabelHeading = true } = Astro.props;
+
+const Tag = isPrimaryLabelHeading ? 'h1' : 'p';
+---
+
+<header class="site-header js-heading">
+	{
+		primaryLabel && (
+			<div class="site-header__title">
+				<Tag class="js-swup-text" set:html={primaryLabel} />
+			</div>
+		)
+	}
+</header>

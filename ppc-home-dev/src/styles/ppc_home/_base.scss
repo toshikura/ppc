@@ -1,0 +1,38 @@
+#swup {
+	position: relative;
+	z-index: var(--z-index-main);
+}
+
+.ppc-canvas {
+	position: fixed;
+	z-index: var(--z-index-canvas);
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.7s var(--ease-power2-in);
+
+	&[data-active='true'] {
+		opacity: 1;
+		transition-timing-function: var(--ease-power2-out);
+	}
+
+	canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.tp-dfwv {
+	z-index: 20;
+}
+
+html:not(.is-home) .tp-dfwv {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ppc-canvas {
+		transition-duration: 1ms;
+	}
+}

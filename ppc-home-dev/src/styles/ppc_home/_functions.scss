@@ -1,0 +1,33 @@
+@use 'sass:math';
+@use 'sass:meta';
+
+$design_width: 1470px;
+$design_height: 800px;
+
+@function strip-unit($value) {
+	@if meta.type-of($value) != 'number' {
+		@return $value;
+	}
+
+	@if math.is-unitless($value) {
+		@return $value;
+	}
+
+	@return math.div($value, $value * 0 + 1);
+}
+
+@function getVw($size) {
+	@return math.div(strip-unit($size), strip-unit($design_width)) * 100vw;
+}
+
+@function getVh($size) {
+	@return math.div(strip-unit($size), strip-unit($design_height)) * 100vh;
+}
+
+@function getVwClamp($size, $min, $max) {
+	@return clamp($min, getVw($size), $max);
+}
+
+@function getVhClamp($size, $min, $max) {
+	@return clamp($min, getVh($size), $max);
+}

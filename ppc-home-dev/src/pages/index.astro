@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Filter from '../components/ppc_home/ui/filter.astro';
+import { HOME_FEATURED_PROJECTS } from '../data/ppc_home/home-featured-projects';
+---
+
+<Layout title="(PPC)" bg="white" isFullPage className="home">
+	<h1>(PPC)</h1>
+	<Filter />
+
+	<nav class="usg-grid" aria-label="Projects">
+		<div class="usg-grid-body">
+			{
+				HOME_FEATURED_PROJECTS.map((item, index) => (
+					<div class="usg-grid-block">
+						<div class="usg-grid-pivot js-media-wrap">
+							<div class="usg-grid-inner js-media-target">
+								<a
+									class="home__project-link"
+									href={item.href}
+									aria-label={item.title}
+									data-ppc-home-link
+									data-index={index}
+									draggable="false"
+								/>
+							</div>
+						</div>
+					</div>
+				))
+			}
+		</div>
+	</nav>
+</Layout>

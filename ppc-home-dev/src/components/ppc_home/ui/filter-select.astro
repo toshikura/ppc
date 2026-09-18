@@ -1,0 +1,42 @@
+---
+import { categorySlug } from '../../../data/ppc_home/home-featured-projects';
+
+interface Props {
+	name: string;
+	options: string[];
+	allLabel?: string;
+}
+
+const { name, options, allLabel = 'All' } = Astro.props;
+---
+
+<div class="ui-filter-select js-ui-filter" data-name={name}>
+	<label class="ui-filter-trigger">
+		<select class="ui-reset ui-filter-value js-ui-filter-value" name={name}>
+			<option value="">{allLabel}</option>
+			{options.map((option) => (
+				<option value={categorySlug(option)}>{option}</option>
+			))}
+		</select>
+		<div class="ui-filter-arrow">▼</div>
+	</label>
+
+	<div class="ui-filter-menu" data-lenis-prevent data-usg-scroll-prevent>
+		<ul class="ui-filter-options">
+			<li class="js-ui-filter-option" data-value="">
+				<div class="ui-filter-option-inner">
+					<span class="ui-filter-option-icon"></span>
+					<span>{allLabel}</span>
+				</div>
+			</li>
+			{options.map((option) => (
+				<li class="js-ui-filter-option" data-value={categorySlug(option)}>
+					<div class="ui-filter-option-inner">
+						<span class="ui-filter-option-icon"></span>
+						<span>{option}</span>
+					</div>
+				</li>
+			))}
+		</ul>
+	</div>
+</div>

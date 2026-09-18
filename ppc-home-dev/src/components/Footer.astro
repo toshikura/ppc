@@ -1,0 +1,93 @@
+---
+import Logo from './Logo.astro';
+import { withBase } from '../utils/paths';
+
+interface Props {
+	hideNavigation?: boolean;
+	nextPage?: {
+		title: string;
+		href: string;
+	};
+	breadcrumbItems?: {
+		label: string;
+		href: string | null;
+	}[];
+}
+
+const { nextPage, breadcrumbItems, hideNavigation = false } = Astro.props;
+
+const parentPage = (() => {
+	if ((breadcrumbItems?.length ?? 0) > 1) {
+		return {
+			label: breadcrumbItems[breadcrumbItems.length - 2].label,
+			href: breadcrumbItems[breadcrumbItems.length - 2].href,
+		};
+	}
+
+	return {
+		label: 'Intro',
+		href: withBase(''),
+	};
+})();
+
+const nextPageLabel =
+	(breadcrumbItems?.length ?? 0) > 1 ? (parentPage.label ?? 'Page') : 'Page';
+---
+
+<footer
+	id="footer"
+	class:list={['site-footer', hideNavigation && 'site-footer--compact']}
+>
+	{
+		nextPage && !hideNavigation && (
+			<div class="site-footer__nav">
+				<a class="site-footer__next" href={nextPage.href}>
+					<span aria-hidden="true">
+						Next
+						<span class="site-footer__next-sep">&nbsp;&nbsp;/&nbsp;&nbsp;</span>
+						{nextPage.title}
+					</span>
+					<span class="sr-only">
+						Next {nextPageLabel}: {nextPage.title}
+					</span>
+				</a>
+				<a class="site-footer__back" href={parentPage.href}>
+					<span class="site-footer__back-arrow" aria-hidden="true">←</span>
+					&nbsp;
+					{parentPage.label}
+				</a>
+			</div>
+		)
+	}
+
+	<div class="footer-statement">
+		<div class="footer-top-space" aria-hidden="true"></div>
+
+		<div class="footer-words">
+			<p class="footer-practice">
+				<span lang="de">denken und handeln</span><br />
+				<span lang="en">philosophy and design</span>
+			</p>
+			<div class="footer-principles">
+				<p lang="de">gestalting ist<br />wahr, gut, schön</p>
+				<p lang="en">design is<br />true, good, beautiful</p>
+			</div>
+		</div>
+
+		<div class="footer-bottom">
+			<div class="footer-setting">Setting</div>
+			<nav class="footer-social" aria-label="Follow Patmos">
+				<span>Newsletter</span>
+				<span>Podcast</span>
+				<span>Instagram</span>
+			</nav>
+			<a
+				class="footer-logo"
+				href={withBase('')}
+				aria-label="Patmos home"
+			>
+				<Logo class="footer-logo__mark" />
+			</a>
+		</div>
+	</div>
+</footer>

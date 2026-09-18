@@ -1,0 +1,62 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { HOME_FEATURED_PROJECTS } from '../../../data/ppc_home/home-featured-projects';
+import { withBase } from '../../../utils/paths';
+
+export function getStaticPaths() {
+	return HOME_FEATURED_PROJECTS.map((item, index) => ({
+		params: { slug: item.id },
+		props: {
+			item,
+			nextItem: HOME_FEATURED_PROJECTS[(index + 1) % HOME_FEATURED_PROJECTS.length],
+		},
+	}));
+}
+
+const { item, nextItem } = Astro.props;
+const source = item.sources.large;
+---
+
+<Layout
+	title={`( ${item.title} ) Placeholder project page`}
+	className="single"
+	breadcrumbItems={[
+		{ label: 'Collection', href: withBase('collection/') },
+		{ label: item.title, href: null },
+	]}
+	nextPage={{
+		title: nextItem.title,
+		href: nextItem.href,
+	}}
+>
+	<section class="single__featured">
+		<figure
+			class="single__thumbnail"
+			data-transition-target
+			data-project-id={item.id}
+		>
+			{
+				item.media === 'video' ? (
+					<video
+						src={source.url}
+						poster={item.poster.large.url}
+						width={source.width}
+						height={source.height}
+						muted
+						loop
+						playsinline
+						preload="metadata"
+						onclick="this.paused ? this.play() : this.pause()"
+					/>
+				) : (
+					<img
+						src={source.url}
+						alt={item.title}
+						width={item.width}
+						height={item.height}
+					/>
+				)
+			}
+		</figure>
+	</section>
+</Layout>

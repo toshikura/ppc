@@ -1,0 +1,26 @@
+html {
+	background: #000;
+	transition: background-color var(--ppc-bg-duration, 0.7s) var(--ease-power2-in);
+}
+
+html[data-bg='white'] {
+	--color-fg: #000;
+	color: #000;
+	background: #fff;
+	transition: background-color var(--ppc-bg-duration, 0.7s) var(--ease-power2-out);
+}
+
+html.is-menu-overlay {
+	--color-fg: #e0e0e0;
+	color: var(--color-fg);
+}
+
+.site-menu {
+	background: #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		transition-duration: 1ms;
+	}
+}

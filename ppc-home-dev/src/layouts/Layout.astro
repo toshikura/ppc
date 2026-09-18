@@ -1,0 +1,106 @@
+---
+import '../styles/global.scss';
+import SiteNavigation from '../components/SiteNavigation.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getSitePath } from '../utils/paths';
+
+interface Props {
+	title: string;
+	headerTitle?: string;
+	bg?: 'white' | 'black';
+	isFullPage?: boolean;
+	isPrimaryLabelHeading?: boolean;
+	className?: string;
+	nextPage?: {
+		title: string;
+		href: string;
+	};
+	breadcrumbItems?: {
+		label: string;
+		href: string | null;
+	}[];
+	hideFooterNavigation?: boolean;
+}
+
+const {
+	title,
+	headerTitle,
+	bg = 'black',
+	isFullPage = false,
+	isPrimaryLabelHeading = true,
+	className = '',
+	nextPage,
+	breadcrumbItems,
+	hideFooterNavigation = false,
+} = Astro.props;
+
+const sitePath = getSitePath(Astro.url.pathname);
+const isHome = sitePath === '';
+---
+
+<!doctype html>
+<html lang="ja" data-bg={bg} data-site-path={sitePath} class:list={{ 'is-home': isHome }}>
+	<head>
+		<script is:inline>
+			(function () {
+				var sitePath = document.documentElement.getAttribute('data-site-path') || '';
+				var path = location.pathname.replace(/index\.html$/, '');
+				if (path.charAt(path.length - 1) !== '/') path += '/';
+				if (sitePath) {
+					var suffix = sitePath;
+					if (suffix.charAt(suffix.length - 1) !== '/') suffix += '/';
+					if (path.slice(-suffix.length) === suffix) {
+						path = path.slice(0, path.length - suffix.length);
+					}
+				}
+				if (path.charAt(path.length - 1) !== '/') path += '/';
+				var el = document.createElement('base');
+				el.setAttribute('href', path);
+				document.head.insertBefore(el, document.head.firstChild);
+			})();
+		</script>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="description" content="AstroとSwupによるクリック遷移デモ" />
+		<title>{title}</title>
+		<script>
+			import '../scripts/site';
+		</script>
+	</head>
+	<body>
+		<div id="swup" class:list={['swup-fade', isFullPage ? 'ppc-shell--full' : 'ppc-shell']}>
+			{
+				!isFullPage && (
+					<Header
+						primaryLabel={headerTitle ?? title}
+						isPrimaryLabelHeading={isPrimaryLabelHeading}
+					/>
+				)
+			}
+			<main
+				class={className}
+				data-page={isHome ? 'home' : undefined}
+			>
+				<slot />
+			</main>
+			{
+				!isFullPage && (
+					<Footer
+						nextPage={nextPage}
+						breadcrumbItems={breadcrumbItems}
+						hideNavigation={hideFooterNavigation}
+					/>
+				)
+			}
+		</div>
+
+		<div
+			class="ppc-canvas"
+			data-ppc-canvas
+			data-active={isHome ? 'true' : 'false'}
+		></div>
+
+		<SiteNavigation />
+	</body>
+</html>

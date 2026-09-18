@@ -1,0 +1,66 @@
+---
+import Logo from './Logo.astro';
+import { MENU_LINKS } from '../data/site-nav';
+import { pathKey, withBase } from '../utils/paths';
+---
+
+<div class="site-navigation">
+	<div class="site-navigation__controls">
+		<div class="site-navigation__contact">
+			<p id="menu-logo">
+				<a class="site-navigation__contact-link" href={withBase('contact/')}>
+					Contact
+				</a>
+			</p>
+		</div>
+		<button
+			id="menu-button"
+			class="site-navigation__toggle js-menu-trigger"
+			type="button"
+			aria-controls="menu"
+			aria-expanded="false"
+		>
+			<span class="site-navigation__toggle-label">
+				<span class="site-navigation__toggle-index js-menu-inactive-toggle-text">
+					Index
+				</span>
+				<span class="site-navigation__toggle-close js-menu-active-toggle-text">
+					Close
+				</span>
+			</span>
+		</button>
+	</div>
+</div>
+
+<nav id="menu" class="site-menu" aria-label="Primary" aria-hidden="true">
+	<div class="site-menu__main">
+		<ul class="site-menu__list leading-trim">
+			{
+				MENU_LINKS.map(({ label, href }) => (
+					<li class:list={label === 'Contact' && 'site-menu__item--contact'}>
+						<a
+							class="site-menu__link js-menu-item js-menu-link"
+							href={href}
+							data-path={href}
+							aria-current={
+								pathKey(Astro.url.pathname) === pathKey(href) ? 'page' : undefined
+							}
+						>
+							<span class="js-menu-active-text">{label}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+	<div class="site-menu__footer js-menu-content">
+		<div class="site-menu__setting">
+			<span class="js-menu-active-text">Setting</span>
+		</div>
+		<a class="site-menu__logo js-menu-link" href={withBase('')} aria-label="Patmos home">
+			<span class="js-menu-active-text">
+				<Logo class="site-menu__logo-mark" />
+			</span>
+		</a>
+	</div>
+</nav>

@@ -1,0 +1,19 @@
+@use './functions' as *;
+
+:root {
+
+	//
+	--z-index-canvas     : 1;
+	--z-index-main       : 2;
+
+	//
+	--ppc-home-aspect-ratio : 252 / 318;
+	--ppc-home-gap-x        : #{getVwClamp(15, 10px, 100px)};
+	--ppc-home-gap-y        : #{getVwClamp(17.5, 10px, 100px)};
+	--ppc-home-padding-x    : #{getVwClamp(60, 10px, 120px)};
+	--ppc-home-padding-y    : #{getVwClamp(60, 10px, 120px)};
+
+	//
+	--ppc-bg-duration    : 0.7s;
+
+}

@@ -1,0 +1,107 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { HOME_FEATURED_PROJECTS, categorySlug } from '../../data/ppc_home/home-featured-projects';
+import { withBase } from '../../utils/paths';
+
+const categories = [...new Set(HOME_FEATURED_PROJECTS.flatMap((item) => item.filter.category))];
+
+function queryValue(value) {
+	return value && value !== 'all' ? value : '';
+}
+
+const activeCategory = queryValue(Astro.url.searchParams.get('category'));
+const activeCountry = queryValue(Astro.url.searchParams.get('country'));
+
+function thumbnail(item) {
+	return item.media === 'video' ? item.poster.medium : item.sources.medium;
+}
+
+function itemHidden(item) {
+	const categories = item.filter.category.map(categorySlug);
+	const categoryHidden = activeCategory !== '' && !categories.includes(activeCategory);
+	const countryHidden = activeCountry !== '' && categorySlug(item.filter.country) !== activeCountry;
+	return categoryHidden || countryHidden;
+}
+---
+
+<Layout
+	title="( Collection )"
+	className="collection"
+	breadcrumbItems={[{ label: 'Collection', href: null }]}
+	nextPage={{
+		title: 'Episode',
+		href: withBase('episode/'),
+	}}
+>
+	<div class="collection__body js-toggle-view" data-view="image">
+		<div class="collection__toolbar">
+			<label class="collection__filter">
+				<span>Filter:</span>
+				<select class="collection__select js-select-work-category">
+					<optgroup label="Category">
+						<option value="" selected={!activeCategory}>All</option>
+						{categories.map((category) => (
+							<option value={categorySlug(category)} selected={activeCategory === categorySlug(category)}>{category}</option>
+						))}
+					</optgroup>
+				</select>
+			</label>
+
+			<span class="collection__col-label collection__col-label--project">Project</span>
+			<span class="collection__col-label collection__col-label--industry">Industry</span>
+
+			<div class="collection__views">
+				<button class="collection__view" type="button" data-view="image" disabled>
+					Image
+				</button>
+				<button class="collection__view" type="button" data-view="list">
+					Text
+				</button>
+			</div>
+		</div>
+
+		<div class="collection__grid">
+			{
+				HOME_FEATURED_PROJECTS.map((item) => {
+					const source = thumbnail(item);
+					return (
+						<a
+							class="collection__card"
+							href={item.href}
+							data-category={item.filter.category.map(categorySlug).join(',')}
+							data-country={categorySlug(item.filter.country)}
+							hidden={itemHidden(item)}
+						>
+							<img
+								src={source.url}
+								alt={item.title}
+								width={source.width}
+								height={source.height}
+							/>
+						</a>
+					);
+				})
+			}
+		</div>
+
+		<ul class="collection__rows">
+			{
+				HOME_FEATURED_PROJECTS.map((item) => (
+					<li
+						class="collection__row"
+						data-category={item.filter.category.map(categorySlug).join(',')}
+						data-country={categorySlug(item.filter.country)}
+						hidden={itemHidden(item)}
+					>
+						<a class="collection__row-link" href={item.href}>
+							<span class="collection__row-country">{item.filter.country}</span>
+							<span class="collection__row-title">{item.title}</span>
+							<span class="collection__row-category">{item.filter.category.join(', ')}</span>
+							<span class="collection__row-meta">{item.filter.category[0]}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</Layout>

@@ -1,0 +1,110 @@
+@import './ppc_home/lib/usagi-grid-scroll.css';
+
+html.is-home,
+html.is-home body {
+	overflow: hidden;
+	overscroll-behavior: none;
+}
+
+.home {
+	position: relative;
+	height: 100svh;
+	overflow: hidden;
+
+	> h1 {
+		pointer-events: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		padding: var(--spacing-gutter);
+		margin-block: calc(var(--spacing-half-leading) * -1);
+		font-size: calc(var(--spacing) * 20);
+		font-weight: 300;
+		line-height: calc(var(--spacing) * 30);
+		transition: opacity 0.8s var(--ease-power2-out), color 0.8s var(--ease-power2-out);
+	}
+}
+
+html.is-menu-overlay .home > h1 {
+	opacity: 0;
+	transition-duration: 0.5s;
+}
+
+.home .usg-grid {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+
+html.is-ppc-home-splash .home .usg-grid {
+	pointer-events: none;
+}
+
+.usg-grid-block{
+	aspect-ratio: var(--ppc-home-aspect-ratio);
+	padding: var(--ppc-home-gap-x) var(--ppc-home-gap-y);
+}
+
+.usg-grid-pivot{
+	padding: var(--ppc-home-padding-x) var(--ppc-home-padding-y);
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 0;
+	font-size: inherit;
+	color: inherit;	
+}
+.usg-grid-inner {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: none;
+	border-radius: 0;
+	font-size: inherit;
+	color: inherit;
+}
+
+.home__project-link {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	overflow: hidden;
+	color: transparent;
+	width: 100%;
+	height: 100%;
+	display: block;
+	&:focus-visible {
+		outline: 1px solid var(--color-fg);
+		outline-offset: 4px;
+	}
+}
+
+
+
+// ===============================================
+//
+// TRANSITION
+//
+// ===============================================
+html.is-ppc-home-transition,
+html.is-ppc-home-transition body {
+	overflow: hidden;
+	overscroll-behavior: none;
+}
+
+html.is-ppc-home-transition [data-transition-target] img,
+html.is-ppc-home-transition [data-transition-target] video,
+html.is-ppc-home-held [data-transition-target] img,
+html.is-ppc-home-held [data-transition-target] video {
+	visibility: hidden;
+}
+
+html.is-ppc-home-transition [data-ppc-canvas],
+html.is-ppc-home-held [data-ppc-canvas] {
+	opacity: 1;
+	transition-duration: 0s;
+}
